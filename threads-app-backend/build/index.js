@@ -13,51 +13,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const server_1 = require("@apollo/server");
 const express4_1 = require("@apollo/server/express4");
-const db_1 = require("./lib/db");
+const graphql_1 = __importDefault(require("./graphql"));
 function init() {
     return __awaiter(this, void 0, void 0, function* () {
         const app = (0, express_1.default)();
         const port = Number(process.env.port) || 8000;
         app.use(express_1.default.json());
-        const graphqlServer = new server_1.ApolloServer({
-            typeDefs: `
-   type Query {
-   hellow : String
-   say(name : String): String 
-}
-   type Mutation {
-   
-   createUser(firstName: String! ,lastName: String! , email:String! , password:String!):Boolean
-   }
-`,
-            resolvers: {
-                Query: {
-                    hellow: () => 'How are you',
-                    say: (_, { name }) => `hey ${name}, how are you?`
-                },
-                Mutation: {
-                    createUser: (_1, _a) => __awaiter(this, [_1, _a], void 0, function* (_, { firstName, lastName, email, password }) {
-                        yield db_1.prismaClient.user.create({
-                            data: {
-                                email,
-                                firstName,
-                                lastName,
-                                password,
-                                salt: "random  "
-                            },
-                        });
-                        return true;
-                    })
-                }
-            }
-        });
-        yield graphqlServer.start();
         app.get('/ ', (req, res) => {
             res.json({ message: "server in running " });
         });
-        app.use('/graphql', (0, express4_1.expressMiddleware)(graphqlServer));
+        app.use('/graphql', (0, express4_1.expressMiddleware)(yield (0, graphql_1.default)()));
         app.listen(port, () => console.log(`server started at port ${port}`));
     });
 }
